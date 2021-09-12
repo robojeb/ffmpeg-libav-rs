@@ -5,14 +5,18 @@ use super::{
 use crate::{
     error::{Error, Result},
     tags::{Configured, Unconfigured},
-    util::dict::Dictionary,
+    util::{dict::Dictionary, Filterable},
     Frame,
 };
 use ffav_sys::{
-    avfilter_graph_alloc, avfilter_graph_alloc_filter, avfilter_graph_config, avfilter_graph_free,
-    avfilter_init_dict, avfilter_link, AVFilter, AVFilterContext, AVFilterGraph,
+    avfilter_graph_alloc, avfilter_graph_alloc_filter, avfilter_graph_config, avfilter_graph_dump,
+    avfilter_graph_free, avfilter_init_dict, avfilter_link, AVFilter, AVFilterContext,
+    AVFilterGraph,
 };
-use std::{ffi::CString, marker::PhantomData};
+use std::{
+    ffi::{CStr, CString},
+    marker::PhantomData,
+};
 
 pub struct FilterGraph<State> {
     graph: *mut AVFilterGraph,
@@ -392,6 +396,19 @@ impl<T> std::ops::Drop for FilterGraph<T> {
             avfilter_graph_free(&mut self.graph);
             // NOTE: We don't have to free the filter's because the graph free
             // will take care of that for us
+        }
+    }
+}
+
+impl std::fmt::Display for FilterGraph<Configured> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        unsafe {
+            write!(
+                f,
+                "{}",
+                CStr::from_ptr(avfilter_graph_dump(self.graph, std::ptr::null_mut()))
+                    .to_string_lossy()
+            )
         }
     }
 }

@@ -87,6 +87,10 @@ impl<AV: MediaType> Codec<Decode, AV> {
     /// The supplied packet will be unreferenced by this operation and will
     /// be available for later use.
     pub fn submit_packet(&mut self, packet: &mut Packet) -> Result<()> {
+        if packet.stream_index() != self.stream_config.stream_index() {
+            return Err(Error::PacketFromInvalidStream);
+        }
+
         unsafe {
             let pkt = packet.as_raw();
 

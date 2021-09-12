@@ -53,6 +53,10 @@ pub enum Error {
         dest_type: AVMediaType,
     },
 
+    /// The provided packet was not for the stream that configured this Codec
+    #[error("The supplied packet was not for the stream which configured this Codec")]
+    PacketFromInvalidStream,
+
     //
     // The following errors come from the libav library
     //
@@ -79,6 +83,9 @@ pub enum Error {
 
     #[error("Could not find a relevant stream")]
     StreamNotFound,
+
+    #[error("Format stream contained invalid data")]
+    InvalidData,
 }
 
 impl Error {
@@ -91,6 +98,8 @@ impl Error {
             Error::EoF
         } else if err == ffav_sys::err::AVERROR_STREAM_NOT_FOUND {
             Error::StreamNotFound
+        } else if err == ffav_sys::err::AVERROR_INVALIDDATA {
+            Error::InvalidData
         } else {
             Error::AVUnknown { ctx, ret_val: err }
         }

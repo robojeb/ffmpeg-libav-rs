@@ -46,12 +46,12 @@ impl Filter for AFormat {
     fn config_parameters_dict(&self) -> Dictionary {
         let mut dict = Dictionary::new();
 
-        if let Some(_sample_rate) = self.sample_rate {
-            dict.add("sample_rates", "44100");
+        if let Some(sample_rate) = self.sample_rate {
+            dict.add("sample_rates", format!("{}", sample_rate));
         }
 
         if let Some(sample_format) = self.sample_format {
-            dict.add("sample_formats", format!("{}", sample_format.format_name()));
+            dict.add("sample_fmts", dbg!(format!("{}", sample_format)));
         }
 
         if let Some(channel_layout) = self.channel_layout {

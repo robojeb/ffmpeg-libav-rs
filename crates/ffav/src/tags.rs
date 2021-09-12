@@ -1,6 +1,9 @@
 //! Contains marker structs used to enforce type safety for components
 
-use crate::util::MediaType;
+use crate::{
+    raw::filter::audio::ABufferSource,
+    util::{Filterable, MediaType},
+};
 use ffav_sys::AVMediaType;
 
 /// Marker struct indicating that the associated item is related to Audio
@@ -69,4 +72,15 @@ impl MediaType for Data {
 
 impl MediaType for Attachment {
     const MEDIA_TYPE: AVMediaType = AVMediaType::AVMEDIA_TYPE_ATTACHMENT;
+}
+
+impl Filterable for Audio {
+    type InputType = ABufferSource;
+
+    fn from_decoded_stream<N: Into<String>>(
+        name: N,
+        decoded: &crate::config::stream::DecodedStreamConfig<Self>,
+    ) -> Self::InputType {
+        ABufferSource::from_decoded_stream(name, decoded)
+    }
 }

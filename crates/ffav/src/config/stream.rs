@@ -68,6 +68,10 @@ impl<AV> StreamConfig<AV> {
     pub fn time_base(&self) -> &TimeBase {
         &self.time_base
     }
+
+    pub fn stream_index(&self) -> usize {
+        self.index
+    }
 }
 
 /// Holds information about a stream that has been decoded.

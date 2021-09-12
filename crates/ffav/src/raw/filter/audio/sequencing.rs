@@ -12,6 +12,34 @@ pub struct ATrim {
     duration: Option<Timestamp>,
 }
 
+impl ATrim {
+    pub fn new_with_duration(
+        name: impl Into<String>,
+        start: impl Into<Timestamp>,
+        duration: impl Into<Timestamp>,
+    ) -> Self {
+        ATrim {
+            name: name.into(),
+            start: start.into(),
+            end: None,
+            duration: Some(duration.into()),
+        }
+    }
+
+    pub fn new_with_end(
+        name: impl Into<String>,
+        start: impl Into<Timestamp>,
+        end: impl Into<Timestamp>,
+    ) -> Self {
+        ATrim {
+            name: name.into(),
+            start: start.into(),
+            end: Some(end.into()),
+            duration: None,
+        }
+    }
+}
+
 impl HasInputPads for ATrim {}
 impl HasOutputPads for ATrim {}
 
@@ -46,8 +74,18 @@ impl Filter for ATrim {
 
 pub struct ACrosssfade {
     name: String,
-    nb_samples: usize,
+    duration: Timestamp,
     overlap: bool,
+}
+
+impl ACrosssfade {
+    pub fn no_overlap(name: impl Into<String>, duration: impl Into<Timestamp>) -> Self {
+        ACrosssfade {
+            name: name.into(),
+            duration: duration.into(),
+            overlap: false,
+        }
+    }
 }
 
 impl HasInputPads for ACrosssfade {}
@@ -68,7 +106,7 @@ impl Filter for ACrosssfade {
     fn config_parameters_dict(&self) -> Dictionary {
         let mut dict = Dictionary::new();
 
-        dict.add("nb_samples", format!("{}", self.nb_samples));
+        dict.add("duration", format!("{}", self.duration));
         dict.add("overlap", format!("{}", if self.overlap { 1 } else { 0 }));
 
         dict
