@@ -2,8 +2,8 @@ pub mod audio;
 mod graph;
 
 use crate::{
+    config::Dictionary,
     error::{Error, Result},
-    util::dict::Dictionary,
     Frame,
 };
 use ffav_sys::{avfilter_get_by_name, AVFilterContext};

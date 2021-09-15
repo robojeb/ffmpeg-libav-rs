@@ -3,8 +3,10 @@ use std::path::Path;
 use crate::{
     error::{Error, Result},
     raw::{codec::Codec, format::Format, frame::Frame, packet::Packet, stream::Stream},
-    tags::{Decode, Input},
-    util::MediaType,
+    util::{
+        marker::{Decode, Input},
+        MediaType,
+    },
 };
 
 /// Decode a single stream from a selected file with no processing

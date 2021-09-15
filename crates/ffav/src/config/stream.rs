@@ -1,15 +1,19 @@
+//! Configuration information for streams contained in Formats
+
 use std::{marker::PhantomData, ops::Deref};
 
-use ffav_sys::{AVCodecParameters, AVMediaType, AVSampleFormat, AVStream};
+use ffav_sys::{
+    AVCodecContext, AVCodecID, AVCodecParameters, AVMediaType, AVPixelFormat, AVSampleFormat,
+    AVStream,
+};
 
-use crate::{
-    tags::{Audio, Unknown},
-    util::{
-        channels::ChannelLayout,
-        sampling::SampleFormat,
-        time::{TimeBase, TimeBaseTicks},
-        MediaType,
-    },
+use crate::util::{
+    channels::ChannelLayout,
+    marker::{Audio, Unknown, Video},
+    pixels::PixelFormat,
+    sampling::SampleFormat,
+    time::{FrameRate, SampleRate, TimeBase, TimeBaseTicks},
+    MediaType,
 };
 
 /// Holds information about the static configuration of a stream object
@@ -53,10 +57,27 @@ impl<AV> StreamConfig<AV> {
         }
     }
 
+    /// Convert a stream config pack to "Unknown" type
+    ///
+    /// This is most useful if you are storing a bunch of streams of various types
+    /// in a homogeneous collection.
     pub fn as_unknown(self) -> StreamConfig<Unknown> {
         unsafe { std::mem::transmute(self) }
     }
 
+    /// Get the time-base used for this stream
+    pub fn time_base(&self) -> TimeBase {
+        self.time_base
+    }
+
+    /// Get the index of this stream
+    pub fn stream_index(&self) -> usize {
+        self.index
+    }
+}
+
+impl StreamConfig<Unknown> {
+    /// Try to convert a stream of unknown type to another stream type
     pub fn try_as_type<T: MediaType>(self) -> Option<StreamConfig<T>> {
         if self.codec_params.media_type == T::MEDIA_TYPE {
             Some(unsafe { std::mem::transmute(self) })
@@ -64,28 +85,85 @@ impl<AV> StreamConfig<AV> {
             None
         }
     }
+}
 
-    pub fn time_base(&self) -> &TimeBase {
-        &self.time_base
+impl StreamConfig<Audio> {
+    /// How many channels does this stream contain
+    pub fn num_channels(&self) -> u32 {
+        self.codec_params.channel_layout.bits().count_ones()
     }
 
-    pub fn stream_index(&self) -> usize {
-        self.index
+    /// What is the channel layout of this stream
+    pub fn channel_layout(&self) -> ChannelLayout {
+        self.codec_params.channel_layout
+    }
+
+    /// What is the sample rate of this stream
+    pub fn sample_rate(&self) -> SampleRate {
+        self.codec_params.sample_rate
+    }
+
+    /// What format are samples stored in this stream
+    pub fn sample_format(&self) -> SampleFormat {
+        // Safety: The `format` field from an `AVCodecParameters` struct can be one of two
+        // types cast ot an i32 depending on the underlying media type.
+        // Per the documentation:
+        //
+        //  video: the pixel format, the value corresponds to enum AVPixelFormat.
+        //  audio: the sample format, the value corresponds to enum AVSampleFormat.
+        //
+        // It is thus safe to transmute to the unerlying `AVSampleFormat` because
+        // we know that this stream is `Audio` type. Then we can convert to the
+        // High level `SampleFormat` type which may not be bit identical to the
+        // C enum.
+        let av_fmt: AVSampleFormat = unsafe { std::mem::transmute(self.codec_params.format) };
+
+        SampleFormat::from(av_fmt)
+    }
+}
+
+impl StreamConfig<Video> {
+    /// The width of a single frame of video
+    pub fn width(&self) -> u32 {
+        self.codec_params.width
+    }
+
+    /// The height of a single frame of vidoe
+    pub fn height(&self) -> u32 {
+        self.codec_params.height
+    }
+
+    /// The pixel format of a decoded frame in this stream
+    pub fn pixel_format(&self) -> PixelFormat {
+        // Safety: The `format` field from an `AVCodecParameters` struct can be one of two
+        // types cast ot an i32 depending on the underlying media type.
+        // Per the documentation:
+        //
+        //  video: the pixel format, the value corresponds to enum AVPixelFormat.
+        //  audio: the sample format, the value corresponds to enum AVSampleFormat.
+        //
+        // It is thus safe to transmute to the unerlying `AVPixelFormat` because
+        // we know that this stream is `Audio` type. Then we can convert to the
+        // High level `SampleFormat` type which may not be bit identical to the
+        // C enum.
+        let av_fmt: AVPixelFormat = unsafe { std::mem::transmute(self.codec_params.format) };
+
+        PixelFormat::from(av_fmt)
+    }
+
+    /// Get the average frame-rate of this stream
+    pub fn avg_frame_rate(&self) -> FrameRate {
+        unimplemented!()
     }
 }
 
 /// Holds information about a stream that has been decoded.
 ///
-/// This may hold additional stream type dependent information like
-/// sampling rate, sample type, or frame format.
-/// Filters will update the decoded stream configuration information based
-/// on their expected operation.
+/// This information may differ from the base stream information depending
+/// on additional options passed to the codec during setup.
 #[derive(Debug, Clone)]
 pub struct DecodedStreamConfig<AV> {
     base: StreamConfig<AV>,
-    sample_format: SampleFormat,
-    channel_layout: ChannelLayout,
-    sample_rate: u32,
 }
 
 impl<AV> Deref for DecodedStreamConfig<AV> {
@@ -97,44 +175,83 @@ impl<AV> Deref for DecodedStreamConfig<AV> {
 }
 
 impl<AV> DecodedStreamConfig<AV> {
-    pub fn new(
+    // TODO: Determine what extra parameters a DecodedStream can/should have
+    // its known that the values can differ, so we might need to re-read some of
+    // those values from the Codec
+    /// Create a configuration for a stream after the codec has be initialized
+    ///
+    /// # Safety
+    /// The `_codec_ctx` must be a valid `AVCodecContext` that was
+    /// initialized for the stream passed in `cfg`
+    pub unsafe fn new(
         cfg: StreamConfig<AV>,
-        sample_fmt: AVSampleFormat,
-        channel_layout: u64,
-        sample_rate: u32,
+        _codec_ctx: *mut AVCodecContext,
     ) -> DecodedStreamConfig<AV> {
-        DecodedStreamConfig {
-            base: cfg,
-            sample_format: sample_fmt.into(),
-            channel_layout: ChannelLayout::from_bits_truncate(channel_layout),
-            sample_rate,
-        }
-    }
-}
-
-impl DecodedStreamConfig<Audio> {
-    pub fn sample_format(&self) -> &SampleFormat {
-        &self.sample_format
-    }
-
-    pub fn channel_layout(&self) -> ChannelLayout {
-        self.channel_layout
-    }
-
-    pub fn sample_rate(&self) -> u32 {
-        self.sample_rate
+        DecodedStreamConfig { base: cfg }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct CodecParameters {
+    // Parameters useful for setting up a codec
     media_type: AVMediaType,
+    codec_id: AVCodecID,
+    codec_tag: u32,
+    profile: i32,
+    level: i32,
+
+    // Informational parameters
+    bit_rate: u64,
+    bits_per_coded_sample: u32,
+    bits_per_raw_sample: u32,
+
+    // Stupidly mixed audio/video information
+    // Have to convert to the appropriate format type depending on the `media_type`
+    format: i32,
+
+    // Audio specific parameters
+    channel_layout: ChannelLayout,
+    sample_rate: SampleRate,
+
+    // Video specific parameters
+    width: u32,
+    height: u32,
+    video_delay: i32,
 }
 
 impl CodecParameters {
     unsafe fn from_av_params(param: *mut AVCodecParameters) -> CodecParameters {
+        let channel_layout = ChannelLayout::from_bits_truncate((*param).channel_layout);
+
+        // Sanity check that the parameters we are being given make sense
+        // In the future we will return the channel count exclusivly by
+        // counting the bits in the channel_layout, so just make sense of it
+        // here
+        assert_eq!(
+            channel_layout.bits().count_ones(),
+            (*param).channels as u32,
+            "Channel layout and channel count do not match"
+        );
+
         CodecParameters {
             media_type: (*param).codec_type,
+            codec_id: (*param).codec_id,
+            codec_tag: (*param).codec_tag,
+            profile: (*param).profile,
+            level: (*param).level,
+
+            bit_rate: (*param).bit_rate as u64,
+            bits_per_coded_sample: (*param).bits_per_coded_sample as u32,
+            bits_per_raw_sample: (*param).bits_per_raw_sample as u32,
+
+            format: (*param).format,
+
+            channel_layout,
+            sample_rate: SampleRate::new((*param).sample_rate as u32),
+
+            width: (*param).width as u32,
+            height: (*param).height as u32,
+            video_delay: (*param).video_delay,
         }
     }
 }

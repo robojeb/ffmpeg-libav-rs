@@ -1,7 +1,7 @@
 use ffav_sys::{AVMediaType, AVStream};
 use std::marker::PhantomData;
 
-use crate::{tags::Unknown, util::MediaType};
+use crate::util::{marker::Unknown, MediaType};
 
 use super::packet::Packet;
 

@@ -1,17 +1,21 @@
 use crate::{
-    config::FormatConfig,
+    config::{FormatConfig, StreamConfig},
     error::{Error, Result},
     raw::stream::Stream,
-    tags::{Input, Output, Unknown},
-    util::MediaType,
+    util::{
+        marker::{Input, Output, Unknown},
+        path_to_cstr,
+        time::{IntoStreamTimestamp, TimeBase, Timestamp},
+        MediaType,
+    },
 };
 use ffav_sys::{
-    av_find_best_stream, av_read_frame, avformat_close_input, avformat_find_stream_info,
-    avformat_free_context, avformat_open_input,
+    av_find_best_stream, av_read_frame, av_seek_frame, avformat_close_input,
+    avformat_find_stream_info, avformat_free_context, avformat_open_input,
     err::{AVERROR_DECODER_NOT_FOUND, AVERROR_STREAM_NOT_FOUND},
-    AVFormatContext,
+    AVFormatContext, AVSEEK_FLAG_BACKWARD,
 };
-use std::{ffi::CString, os::unix::ffi::OsStrExt, path::Path};
+use std::path::Path;
 
 use super::packet::Packet;
 
@@ -50,8 +54,7 @@ impl Format<Input> {
     ///
     /// The format type will be determined by the file name
     pub fn open_input<P: AsRef<Path>>(file: P) -> Result<Format<Input>> {
-        // FIXME: This is only valid on Unix systems
-        let cfile_path = CString::new(file.as_ref().as_os_str().as_bytes())?;
+        let cfile_path = path_to_cstr(file.as_ref())?;
 
         unsafe {
             let mut ctx = std::ptr::null_mut();
@@ -156,6 +159,72 @@ impl Format<Input> {
         self.get_next_packet_into(&mut packet)?;
 
         Ok(packet)
+    }
+
+    /// Seek to the nearest frame before the specified timestamp
+    ///
+    /// The timestamp will be converted to the `time_base` of the specified stream
+    pub fn seek_stream_to_nearest_frame_before<T>(
+        &mut self,
+        stream: &StreamConfig<T>,
+        ts: impl IntoStreamTimestamp<T>,
+    ) -> Result<()> {
+        self.inner_seek(stream.stream_index() as i32, ts.into(stream), true)
+    }
+
+    /// Seek to the nearest frame after the specified timestamp
+    ///
+    /// Note: Other streams in the file will be seeked as well, this function
+    /// simply uses the time_base of the selected stream for seeking.
+    pub fn seek_stream_to_nearest_frame_after<T>(
+        &mut self,
+        stream: &StreamConfig<T>,
+        ts: impl IntoStreamTimestamp<T>,
+    ) -> Result<()> {
+        self.inner_seek(stream.stream_index() as i32, ts.into(stream), false)
+    }
+
+    /// Seek to the nearest frame before the specified timestamp
+    ///
+    /// Note: Other streams in the file will be seeked as well, this function
+    /// simply uses the time_base of the selected stream for seeking.
+    pub fn seek_to_nearest_frame_before(&mut self, ts: impl Into<Timestamp>) -> Result<()> {
+        // The seek wants to use the default timebase because we aren't selecting
+        // a stream, we don't know if that is 1/1000 (millisecond precision) so
+        // we will convert the base here to the ffmpeg default
+        self.inner_seek(-1, ts.into().with_new_timebase(TimeBase::DEFAULT), true)
+    }
+
+    /// Seek to the nearest frame after the specified timestamp
+    ///
+    /// The timestamp will be converted to the ffmpeg default TimeBase
+    pub fn seek_to_nearest_frame_after(&mut self, ts: impl Into<Timestamp>) -> Result<()> {
+        // The seek wants to use the default timebase because we aren't selecting
+        // a stream, we don't know if that is 1/1000 (millisecond precision) so
+        // we will convert the base here to the ffmpeg default
+        self.inner_seek(-1, ts.into().with_new_timebase(TimeBase::DEFAULT), false)
+    }
+
+    /// Shared inner seek function to reduce the amount of monomorphized code and
+    /// hopefully slightly cut down on compile times
+    fn inner_seek(&mut self, stream_idx: i32, ts: Timestamp, before: bool) -> Result<()> {
+        let ticks = ts.get_ticks();
+
+        unsafe {
+            // Seek to the nearest frame
+            let err = av_seek_frame(
+                self.ctx,
+                stream_idx,
+                ticks.as_av_timestamp(),
+                if before { AVSEEK_FLAG_BACKWARD } else { 0 },
+            );
+
+            if err < 0 {
+                return Err(Error::from_av_err("seeking format", err));
+            }
+        }
+
+        Ok(())
     }
 }
 

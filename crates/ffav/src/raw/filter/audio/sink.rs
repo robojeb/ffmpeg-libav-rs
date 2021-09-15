@@ -1,8 +1,8 @@
 use crate::{
+    config::Dictionary,
     error::{Error, Result},
     raw::filter::{Filter, FilterOutput, HasInputPads},
-    tags::Audio,
-    util::dict::Dictionary,
+    util::marker::Audio,
 };
 use ffav_sys::av_buffersink_get_frame;
 use std::ffi::CString;

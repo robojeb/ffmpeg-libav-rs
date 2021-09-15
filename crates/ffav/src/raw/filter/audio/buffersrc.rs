@@ -1,9 +1,8 @@
 use crate::{
-    config::stream::DecodedStreamConfig,
+    config::{stream::DecodedStreamConfig, Dictionary},
     error::Error,
     raw::filter::{Filter, FilterInput, HasOutputPads},
-    tags::Audio,
-    util::dict::Dictionary,
+    util::marker::Audio,
 };
 use ffav_sys::{av_buffersrc_add_frame_flags, AVFilterContext, AV_BUFFERSRC_FLAG_KEEP_REF};
 use std::ffi::CString;
@@ -51,7 +50,7 @@ impl Filter for ABufferSource {
         );
         dict.add(
             "sample_rate",
-            format!("{}", self.incoming_stream.sample_rate()),
+            format!("{}", self.incoming_stream.sample_rate().as_hz()),
         );
 
         dict

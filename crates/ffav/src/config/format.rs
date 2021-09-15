@@ -1,8 +1,10 @@
+//! Configuration information for the root Format container
+
 use ffav_sys::AVFormatContext;
 
-use crate::{
-    tags::Input,
-    util::time::{TimeBaseTicks, Timestamp, DEFAULT_TIME_BASE},
+use crate::util::{
+    marker::Input,
+    time::{TimeBase, TimeBaseTicks, Timestamp},
 };
 use std::{marker::PhantomData, num::NonZeroI64};
 
@@ -46,12 +48,12 @@ impl FormatConfig<Input> {
 
     /// The time of the first frame of the Format
     pub fn start_time(&self) -> Timestamp {
-        self.start_time.to_timestamp(DEFAULT_TIME_BASE)
+        self.start_time.to_timestamp(TimeBase::DEFAULT)
     }
 
     /// The duration of the open Format
     pub fn duration(&self) -> Timestamp {
-        self.duration.to_timestamp(DEFAULT_TIME_BASE)
+        self.duration.to_timestamp(TimeBase::DEFAULT)
     }
 
     /// The bit-rate of the open Format

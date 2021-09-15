@@ -10,9 +10,10 @@ fn main() {
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         .allowlist_type("^AV.*")
         .allowlist_function("^(av_|avformat_|avcodec_|avfilter_).*")
-        .allowlist_var("^AV_.*")
-        .allowlist_var("^AVERROR_.*")
-        .allowlist_var("^AVFILTER_FLAG.*")
+        .allowlist_var("^AV(ERROR|FILTER|SEEK)?_.*")
+        // .allowlist_var("^AVSEEK_.*")
+        // .allowlist_var("^AVERROR_.*")
+        // .allowlist_var("^AVFILTER_FLAG.*")
         .default_enum_style(EnumVariation::Rust {
             non_exhaustive: true,
         })

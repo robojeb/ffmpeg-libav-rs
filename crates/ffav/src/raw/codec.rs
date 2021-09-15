@@ -11,8 +11,7 @@ use ffav_sys::{
 use crate::{
     config::{stream::DecodedStreamConfig, StreamConfig},
     error::{Error, Result},
-    tags::Decode,
-    util::MediaType,
+    util::{marker::Decode, MediaType},
 };
 
 use super::{frame::Frame, packet::Packet, stream::Stream};
@@ -67,12 +66,7 @@ impl<AV: MediaType> Codec<Decode, AV> {
                 .try_as_type()
                 .unwrap();
 
-            let stream_config = DecodedStreamConfig::new(
-                cfg,
-                (*codec).sample_fmt,
-                (*codec).channel_layout,
-                (*codec).sample_rate as u32,
-            );
+            let stream_config = DecodedStreamConfig::new(cfg, codec);
 
             Ok(Codec {
                 codec,

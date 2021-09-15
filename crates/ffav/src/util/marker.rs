@@ -77,7 +77,7 @@ impl MediaType for Attachment {
 impl Filterable for Audio {
     type InputType = ABufferSource;
 
-    fn from_decoded_stream<N: Into<String>>(
+    fn input_from_decoded_stream<N: Into<String>>(
         name: N,
         decoded: &crate::config::stream::DecodedStreamConfig<Self>,
     ) -> Self::InputType {

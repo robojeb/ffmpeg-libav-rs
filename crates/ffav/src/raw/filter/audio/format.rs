@@ -1,8 +1,9 @@
 use std::ffi::CString;
 
 use crate::{
+    config::Dictionary,
     raw::filter::{Filter, HasInputPads, HasOutputPads},
-    util::{channels::ChannelLayout, dict::Dictionary, sampling::SampleFormat},
+    util::{channels::ChannelLayout, sampling::SampleFormat},
 };
 
 pub struct AFormat {

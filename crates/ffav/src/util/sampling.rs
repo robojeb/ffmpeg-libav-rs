@@ -33,7 +33,8 @@ pub enum SampleFormat {
 }
 
 impl SampleFormat {
-    pub(crate) fn to_av_sample(self) -> AVSampleFormat {
+    /// Convert this sample format to an `AVSampleFormat` usable by libav
+    pub fn to_av_sample(self) -> AVSampleFormat {
         match self {
             Self::PackedU8 => AVSampleFormat::AV_SAMPLE_FMT_U8,
             Self::PackedI16 => AVSampleFormat::AV_SAMPLE_FMT_S16,
@@ -51,6 +52,7 @@ impl SampleFormat {
         }
     }
 
+    /// Get the stringified name of this pixel format
     pub fn format_name(&self) -> Cow<str> {
         unsafe { CStr::from_ptr(av_get_sample_fmt_name(self.to_av_sample())).to_string_lossy() }
     }

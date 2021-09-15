@@ -10,8 +10,7 @@ use ffav::{
         },
         format::Format,
     },
-    tags::Audio,
-    util::{channels::ChannelLayout, sampling::SampleFormat},
+    util::{channels::ChannelLayout, marker::Audio, sampling::SampleFormat},
 };
 
 fn main() {

@@ -1,4 +1,6 @@
-// REF: https://ffmpeg.org/ffmpeg-filters.html#Audio-Filters
+//! Audio specific filter configurations
+//!
+//! REF: https://ffmpeg.org/ffmpeg-filters.html#Audio-Filters
 
 mod buffersrc;
 mod format;

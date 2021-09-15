@@ -1,8 +1,9 @@
 use std::ffi::CString;
 
 use crate::{
+    config::Dictionary,
     raw::filter::{Filter, HasInputPads, HasOutputPads},
-    util::{dict::Dictionary, time::Timestamp},
+    util::time::Timestamp,
 };
 
 pub struct ATrim {

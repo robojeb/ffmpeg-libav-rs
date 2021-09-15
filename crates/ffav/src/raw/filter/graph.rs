@@ -3,9 +3,9 @@ use super::{
     HasOutputPads, InputHandle, OutputHandle,
 };
 use crate::{
+    config::Dictionary,
     error::{Error, Result},
-    tags::{Configured, Unconfigured},
-    util::{dict::Dictionary, Filterable},
+    util::marker::{Configured, Unconfigured},
     Frame,
 };
 use ffav_sys::{
