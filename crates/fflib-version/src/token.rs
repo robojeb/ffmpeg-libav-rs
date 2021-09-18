@@ -21,14 +21,14 @@ pub fn parse_optional_punct(iter: Iter, ch: char) -> Option<()> {
     }
 }
 
-pub fn parse_optional_keyword(iter: Iter, keyword: &str) -> Option<Span> {
-    match iter.peek() {
-        Some(TokenTree::Ident(ident)) if ident.to_string() == keyword => {
-            Some(iter.next().unwrap().span())
-        }
-        _ => None,
-    }
-}
+// pub fn parse_optional_keyword(iter: Iter, keyword: &str) -> Option<Span> {
+//     match iter.peek() {
+//         Some(TokenTree::Ident(ident)) if ident.to_string() == keyword => {
+//             Some(iter.next().unwrap().span())
+//         }
+//         _ => None,
+//     }
+// }
 
 pub fn parse_literal(iter: Iter) -> Result<Literal> {
     match iter.next() {
@@ -58,17 +58,17 @@ pub fn parse_paren(introducer: &Ident, iter: Iter) -> Result<Group> {
     }
 }
 
-pub fn parse_optional_paren(iter: Iter) -> Option<Group> {
-    match iter.peek() {
-        Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Parenthesis => {
-            match iter.next() {
-                Some(TokenTree::Group(group)) => Some(group),
-                _ => unreachable!(),
-            }
-        }
-        _ => None,
-    }
-}
+// pub fn parse_optional_paren(iter: Iter) -> Option<Group> {
+//     match iter.peek() {
+//         Some(TokenTree::Group(group)) if group.delimiter() == Delimiter::Parenthesis => {
+//             match iter.next() {
+//                 Some(TokenTree::Group(group)) => Some(group),
+//                 _ => unreachable!(),
+//             }
+//         }
+//         _ => None,
+//     }
+// }
 
 pub fn parse_end(iter: Iter) -> Result<()> {
     match iter.next() {
