@@ -1,5 +1,7 @@
 use ffav_sys::AVColorPrimaries;
 
+fflib_version::ffversion! {
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ColorPrimary {
     /// Unspecified color primary
@@ -24,8 +26,10 @@ pub enum ColorPrimary {
     SMPTE431,
     /// SMPTE ST 432-1 (2010) / P3 D65 / Display P3
     SMPTE432,
-    /// EBU Tech. 3213-E (nothing there) / one of JEDEC P22 group phosphors
-    EBU3213,
+    // /// EBU Tech. 3213-E (nothing there) / one of JEDEC P22 group phosphors
+    // EBU3213,
+    // JEDEC P22 group phosphors
+    //JEDECP22,
 }
 
 impl From<AVColorPrimaries> for ColorPrimary {
@@ -42,7 +46,10 @@ impl From<AVColorPrimaries> for ColorPrimary {
             AVColorPrimaries::AVCOL_PRI_SMPTE428 => ColorPrimary::SMPTE428,
             AVColorPrimaries::AVCOL_PRI_SMPTE431 => ColorPrimary::SMPTE431,
             AVColorPrimaries::AVCOL_PRI_SMPTE432 => ColorPrimary::SMPTE432,
-            AVColorPrimaries::AVCOL_PRI_EBU3213 => ColorPrimary::EBU3213,
+            // AVColorPrimaries::AVCOL_PRI_JEDEC_P22 => ColorPrimary::JEDECP22,
+            // AVColorPrimaries::AVCOL_PRI_EBU3213 => ColorPrimary::EBU3213,
+            // #[cfg(AVFMT_MAJOR = "58")]
+            // AVColorPrimaries::AVCOL_PRI_JEDEC_P22 => ColorPrimary::JEDECP22,
             _ => panic!("Unknown or Reserved color primary was provided"),
         }
     }
@@ -62,7 +69,13 @@ impl From<ColorPrimary> for AVColorPrimaries {
             ColorPrimary::SMPTE428 => AVColorPrimaries::AVCOL_PRI_SMPTE428,
             ColorPrimary::SMPTE431 => AVColorPrimaries::AVCOL_PRI_SMPTE431,
             ColorPrimary::SMPTE432 => AVColorPrimaries::AVCOL_PRI_SMPTE432,
-            ColorPrimary::EBU3213 => AVColorPrimaries::AVCOL_PRI_EBU3213,
+            // #[cfg(AVFMT_MAJOR = "59")]
+            // ColorPrimary::EBU3213 => AVColorPrimaries::AVCOL_PRI_EBU3213,
+            // #[cfg(AVFMT_MAJOR = "58")]
+            // ColorPrimary::JEDECP22 => AVColorPrimaries::AVCOL_PRI_JEDEC_P22,
+            _ => unimplemented!(),
         }
     }
+}
+
 }

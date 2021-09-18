@@ -1,0 +1,18 @@
+[package]
+name = "fflib-version"
+version = "0.1.0"
+authors = ["Jeb Brooks   <jeb@robojeb.dev>"]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "Conditional compilation according to ffmpeg libav* versions"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+proc-macro = true
+
+[dependencies]
+
+
+[build-dependencies]
+pkg-config = "0.3"

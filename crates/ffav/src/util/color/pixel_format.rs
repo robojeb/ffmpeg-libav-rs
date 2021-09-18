@@ -311,10 +311,13 @@ pub enum PixelFormat {
      *
      * data[0] points to an AVVkFrame
      */
+    #[cfg(AVFMT_MAJOR = "59")]
     Vulkan,
     /// packed YUV 4:2:2 like YUYV422, 20bpp, data in the high bits
+    #[cfg(AVFMT_MAJOR = "59")]
     Y210(Endian),
     /// packed RGB 10:10:10, 30bpp, (msb)2X 10R 10G 10B(lsb), X=unused/undefined
+    #[cfg(AVFMT_MAJOR = "59")]
     X2RGB10(Endian),
 }
 
@@ -528,10 +531,15 @@ impl From<PixelFormat> for AVPixelFormat {
             PixelFormat::YUVA444P12(Endian::Little) => AVPixelFormat::AV_PIX_FMT_YUVA444P12LE,
             PixelFormat::NV24 => AVPixelFormat::AV_PIX_FMT_NV24,
             PixelFormat::NV42 => AVPixelFormat::AV_PIX_FMT_NV42,
+            #[cfg(AVFMT_MAJOR = "59")]
             PixelFormat::Vulkan => AVPixelFormat::AV_PIX_FMT_VULKAN,
+            #[cfg(AVFMT_MAJOR = "59")]
             PixelFormat::Y210(Endian::Big) => AVPixelFormat::AV_PIX_FMT_Y210BE,
+            #[cfg(AVFMT_MAJOR = "59")]
             PixelFormat::Y210(Endian::Little) => AVPixelFormat::AV_PIX_FMT_Y210LE,
+            #[cfg(AVFMT_MAJOR = "59")]
             PixelFormat::X2RGB10(Endian::Little) => AVPixelFormat::AV_PIX_FMT_X2RGB10LE,
+            #[cfg(AVFMT_MAJOR = "59")]
             PixelFormat::X2RGB10(Endian::Big) => AVPixelFormat::AV_PIX_FMT_X2RGB10BE,
         }
     }
@@ -734,10 +742,15 @@ impl From<AVPixelFormat> for PixelFormat {
             AVPixelFormat::AV_PIX_FMT_YUVA444P12LE => PixelFormat::YUVA444P12(Endian::Little),
             AVPixelFormat::AV_PIX_FMT_NV24 => PixelFormat::NV24,
             AVPixelFormat::AV_PIX_FMT_NV42 => PixelFormat::NV42,
+            #[cfg(AVFMT_MAJOR = "59")]
             AVPixelFormat::AV_PIX_FMT_VULKAN => PixelFormat::Vulkan,
+            #[cfg(AVFMT_MAJOR = "59")]
             AVPixelFormat::AV_PIX_FMT_Y210BE => PixelFormat::Y210(Endian::Big),
+            #[cfg(AVFMT_MAJOR = "59")]
             AVPixelFormat::AV_PIX_FMT_Y210LE => PixelFormat::Y210(Endian::Little),
+            #[cfg(AVFMT_MAJOR = "59")]
             AVPixelFormat::AV_PIX_FMT_X2RGB10LE => PixelFormat::X2RGB10(Endian::Little),
+            #[cfg(AVFMT_MAJOR = "59")]
             AVPixelFormat::AV_PIX_FMT_X2RGB10BE => PixelFormat::X2RGB10(Endian::Big),
             _ => panic!("Unracognized pixel format"),
         }
