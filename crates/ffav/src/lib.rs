@@ -27,6 +27,23 @@
 //! configuration this library may take extra time to check invariants.
 //!
 //! # Usage
+//! This library provides two classes of interface, "raw" and "high-level".
+//!
+//! The "raw" interface is provided in the `raw` module. This interface is
+//! mostly a direct port of the libav* APIs. The goals of the `raw` module are
+//! to provide memory safety, and some minimal type level API safety. Through
+//! programmer errors, it is possible to get a runtime failure using this API.
+//!
+//! The "high-level" API is split across three modules `decode`, `encode`, and
+//! `transcode`. The goal here is to prevent all runtime erors that are not
+//! related to, resource exhaustion, input corruption, or hardware failure.
+//! This means what the APIs can do is limited to a small subset of what libav
+//! can do.
+//!
+//! ## High level API
+//! TODO
+//!
+//! ## Raw API
 //! TODO
 
 pub mod config;

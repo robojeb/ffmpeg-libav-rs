@@ -34,17 +34,32 @@ impl<AV: MediaType> SimpleDecoder<AV> {
     where
         S: FnOnce(&Format<Input>) -> Result<Stream<AV>>,
     {
-        let format = Format::open_input(file)?;
-        let stream = stream_selector(&format)?;
+        Self::from_format_with_stream(Format::open_input(file)?, stream_selector)
+    }
+
+    /// Set up an existing format for decoding selecting the default stream of type `AV`
+    pub fn from_format(fmt: Format<Input>) -> Result<SimpleDecoder<AV>> {
+        Self::from_format_with_stream(fmt, default_stream_selector)
+    }
+
+    /// Set up an existing format for decoding
+    ///
+    /// The provided function `stream_selector` will
+    /// be provided the opened Format and should return the stream that should
+    /// be decoded.
+    pub fn from_format_with_stream<S>(
+        fmt: Format<Input>,
+        stream_selector: S,
+    ) -> Result<SimpleDecoder<AV>>
+    where
+        S: FnOnce(&Format<Input>) -> Result<Stream<AV>>,
+    {
+        let stream = stream_selector(&fmt)?;
         let codec = Codec::open_decode(&stream)?;
 
         let packet = Packet::new();
 
-        Ok(SimpleDecoder {
-            fmt: format,
-            codec,
-            packet,
-        })
+        Ok(SimpleDecoder { fmt, codec, packet })
     }
 
     /// Get the next decoded frame from the stream
@@ -69,6 +84,7 @@ impl<AV: MediaType> SimpleDecoder<AV> {
             match self.codec.get_next_frame_into(frame) {
                 Ok(_) => return Ok(()),
                 Err(Error::SubmitMoreInput) => {}
+                // NOTE: This will return Error::EoF for us at the end of the input
                 Err(x) => return Err(x),
             }
 
@@ -76,8 +92,27 @@ impl<AV: MediaType> SimpleDecoder<AV> {
             self.codec.submit_packet(&mut self.packet)?;
         }
     }
+
+    /// Destroy the decoding context and return the contained input format
+    ///
+    /// The input format will be seeked back to the beginning of the file
+    pub fn finish(self) -> Format<Input> {
+        self.fmt
+    }
 }
 
 fn default_stream_selector<T: MediaType>(fmt: &Format<Input>) -> Result<Stream<T>> {
     fmt.get_best_stream().ok_or(Error::StreamNotFound)
+}
+
+impl<AV: MediaType> std::iter::Iterator for SimpleDecoder<AV> {
+    type Item = Result<Frame<AV>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.get_next_frame() {
+            Ok(frame) => Some(Ok(frame)),
+            Err(Error::EoF) => None,
+            Err(e) => Some(Err(e)),
+        }
+    }
 }

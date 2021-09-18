@@ -38,8 +38,11 @@ impl fmt::Display for TimeBase {
 }
 
 /// A timestamp or duration in an unknown TimeBase, recorded as a count of
-/// TimeBase units
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+/// TimeBase units.
+///
+/// Without an associated TimeBase this does not provide any useful
+/// information and two instances cannot be compared
+#[derive(Debug, Clone, Copy, Hash)]
 pub struct TimeBaseTicks(u64);
 
 impl TimeBaseTicks {
@@ -60,7 +63,9 @@ impl TimeBaseTicks {
 }
 
 /// A single point in time in a stream
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+///
+/// The resolution of this Timestamp is dependant on the associated TimeBase.
+#[derive(Debug, Clone, Copy, Hash)]
 pub struct Timestamp {
     ticks: TimeBaseTicks,
     base: TimeBase,

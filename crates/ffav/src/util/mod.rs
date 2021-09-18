@@ -2,9 +2,9 @@
 
 /// Types for managing channel layouts of Audio streams
 pub mod channels;
-pub mod marker;
 /// Types for representing Video frame pixel layouts
-pub mod pixels;
+pub mod color;
+pub mod marker;
 /// Types for representing Audio sample formats and layouts
 pub mod sampling;
 pub mod time;

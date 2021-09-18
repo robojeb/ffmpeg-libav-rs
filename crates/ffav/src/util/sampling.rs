@@ -33,28 +33,35 @@ pub enum SampleFormat {
 }
 
 impl SampleFormat {
-    /// Convert this sample format to an `AVSampleFormat` usable by libav
-    pub fn to_av_sample(self) -> AVSampleFormat {
-        match self {
-            Self::PackedU8 => AVSampleFormat::AV_SAMPLE_FMT_U8,
-            Self::PackedI16 => AVSampleFormat::AV_SAMPLE_FMT_S16,
-            Self::PackedI32 => AVSampleFormat::AV_SAMPLE_FMT_S32,
-            Self::PackedI64 => AVSampleFormat::AV_SAMPLE_FMT_S64,
-            Self::PackedF32 => AVSampleFormat::AV_SAMPLE_FMT_FLT,
-            Self::PackedF64 => AVSampleFormat::AV_SAMPLE_FMT_DBL,
-
-            Self::PlanarU8 => AVSampleFormat::AV_SAMPLE_FMT_U8P,
-            Self::PlanarI16 => AVSampleFormat::AV_SAMPLE_FMT_S16P,
-            Self::PlanarI32 => AVSampleFormat::AV_SAMPLE_FMT_S32P,
-            Self::PlanarI64 => AVSampleFormat::AV_SAMPLE_FMT_S64P,
-            Self::PlanarF32 => AVSampleFormat::AV_SAMPLE_FMT_FLTP,
-            Self::PlanarF64 => AVSampleFormat::AV_SAMPLE_FMT_DBLP,
-        }
-    }
-
-    /// Get the stringified name of this pixel format
+    /// Get the stringified name of this sample format
     pub fn format_name(&self) -> Cow<str> {
-        unsafe { CStr::from_ptr(av_get_sample_fmt_name(self.to_av_sample())).to_string_lossy() }
+        unsafe { CStr::from_ptr(av_get_sample_fmt_name(self.into())).to_string_lossy() }
+    }
+}
+
+impl From<&SampleFormat> for AVSampleFormat {
+    fn from(samp: &SampleFormat) -> Self {
+        (*samp).into()
+    }
+}
+
+impl From<SampleFormat> for AVSampleFormat {
+    fn from(samp: SampleFormat) -> Self {
+        match samp {
+            SampleFormat::PackedU8 => AVSampleFormat::AV_SAMPLE_FMT_U8,
+            SampleFormat::PackedI16 => AVSampleFormat::AV_SAMPLE_FMT_S16,
+            SampleFormat::PackedI32 => AVSampleFormat::AV_SAMPLE_FMT_S32,
+            SampleFormat::PackedI64 => AVSampleFormat::AV_SAMPLE_FMT_S64,
+            SampleFormat::PackedF32 => AVSampleFormat::AV_SAMPLE_FMT_FLT,
+            SampleFormat::PackedF64 => AVSampleFormat::AV_SAMPLE_FMT_DBL,
+
+            SampleFormat::PlanarU8 => AVSampleFormat::AV_SAMPLE_FMT_U8P,
+            SampleFormat::PlanarI16 => AVSampleFormat::AV_SAMPLE_FMT_S16P,
+            SampleFormat::PlanarI32 => AVSampleFormat::AV_SAMPLE_FMT_S32P,
+            SampleFormat::PlanarI64 => AVSampleFormat::AV_SAMPLE_FMT_S64P,
+            SampleFormat::PlanarF32 => AVSampleFormat::AV_SAMPLE_FMT_FLTP,
+            SampleFormat::PlanarF64 => AVSampleFormat::AV_SAMPLE_FMT_DBLP,
+        }
     }
 }
 

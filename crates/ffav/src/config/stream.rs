@@ -9,8 +9,8 @@ use ffav_sys::{
 
 use crate::util::{
     channels::ChannelLayout,
+    color::{ColorPrimary, PixelFormat},
     marker::{Audio, Unknown, Video},
-    pixels::PixelFormat,
     sampling::SampleFormat,
     time::{FrameRate, SampleRate, TimeBase, TimeBaseTicks},
     MediaType,
@@ -22,7 +22,7 @@ use crate::util::{
 /// The structure will only provide data relevant to current type of stream.
 /// Conversion from an `Unknown` stream to a stream of a specific type can be accomplished
 /// by one of the `as_X_stream()` types.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct StreamConfig<AV> {
     id: i32,
     index: usize,
@@ -35,6 +35,26 @@ pub struct StreamConfig<AV> {
 }
 
 impl<AV> StreamConfig<AV> {
+    /// Convert a stream config pack to "Unknown" type
+    ///
+    /// This is most useful if you are storing a bunch of streams of various types
+    /// in a homogeneous collection.
+    pub fn as_unknown(self) -> StreamConfig<Unknown> {
+        unsafe { std::mem::transmute(self) }
+    }
+
+    /// Get the time-base used for this stream
+    pub fn time_base(&self) -> TimeBase {
+        self.time_base
+    }
+
+    /// Get the index of this stream
+    pub fn stream_index(&self) -> usize {
+        self.index
+    }
+}
+
+impl StreamConfig<Unknown> {
     pub(crate) fn from_av_stream(stream: *mut AVStream) -> StreamConfig<Unknown> {
         debug_assert!(
             !stream.is_null(),
@@ -57,26 +77,6 @@ impl<AV> StreamConfig<AV> {
         }
     }
 
-    /// Convert a stream config pack to "Unknown" type
-    ///
-    /// This is most useful if you are storing a bunch of streams of various types
-    /// in a homogeneous collection.
-    pub fn as_unknown(self) -> StreamConfig<Unknown> {
-        unsafe { std::mem::transmute(self) }
-    }
-
-    /// Get the time-base used for this stream
-    pub fn time_base(&self) -> TimeBase {
-        self.time_base
-    }
-
-    /// Get the index of this stream
-    pub fn stream_index(&self) -> usize {
-        self.index
-    }
-}
-
-impl StreamConfig<Unknown> {
     /// Try to convert a stream of unknown type to another stream type
     pub fn try_as_type<T: MediaType>(self) -> Option<StreamConfig<T>> {
         if self.codec_params.media_type == T::MEDIA_TYPE {
@@ -151,6 +151,10 @@ impl StreamConfig<Video> {
         PixelFormat::from(av_fmt)
     }
 
+    pub fn color_primary(&self) -> ColorPrimary {
+        self.codec_params.color_primary
+    }
+
     /// Get the average frame-rate of this stream
     pub fn avg_frame_rate(&self) -> FrameRate {
         unimplemented!()
@@ -217,6 +221,7 @@ struct CodecParameters {
     width: u32,
     height: u32,
     video_delay: i32,
+    color_primary: ColorPrimary,
 }
 
 impl CodecParameters {
@@ -252,6 +257,7 @@ impl CodecParameters {
             width: (*param).width as u32,
             height: (*param).height as u32,
             video_delay: (*param).video_delay,
+            color_primary: ColorPrimary::from((*param).color_primaries),
         }
     }
 }

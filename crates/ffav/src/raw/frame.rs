@@ -1,7 +1,9 @@
-use ffav_sys::{av_frame_alloc, av_frame_free, av_frame_unref, AVFrame};
-use std::marker::PhantomData;
+use ffav_sys::{av_frame_alloc, av_frame_free, av_frame_unref, AVFrame, AV_NUM_DATA_POINTERS};
+use std::{marker::PhantomData, ops::Deref};
 
-use crate::util::time::TimeBaseTicks;
+use crate::util::{marker::Video, time::TimeBaseTicks};
+
+pub const NUM_DATA_PLANES: usize = AV_NUM_DATA_POINTERS as usize;
 
 /// A decodec frame of data of type `T`
 pub struct Frame<AV> {
@@ -67,6 +69,43 @@ impl<AV> Frame<AV> {
         out.unref();
         out
     }
+
+    // /// Get the data planes for this frame
+    // pub fn planes(&self) -> &[&[u8]; NUM_DATA_PLANES] {
+    //     unimplemented!()
+    // }
+
+    /// Get a read-only slice of the specified plane
+    ///
+    /// # Panics
+    /// Plane must be less than `NUM_DATA_PLANES` or this function
+    /// will panic
+    pub fn plane(&self, plane: usize) -> Plane<'_> {
+        if plane > NUM_DATA_PLANES {
+            panic!("The requested plane is outside the range supported by this version of ffmpeg");
+        }
+
+        unsafe {
+            Plane {
+                data: std::slice::from_raw_parts(
+                    (*self.frame).data[plane],
+                    (*self.frame).linesize[plane] as usize * (*self.frame).height as usize,
+                ),
+                linesize: (*self.frame).linesize[plane] as usize,
+            }
+        }
+    }
+}
+
+impl Frame<Video> {
+    /// Get the width of this frame
+    pub fn width(&self) -> u32 {
+        unsafe { (*self.frame).width as u32 }
+    }
+    /// Get the height of this frame
+    pub fn height(&self) -> u32 {
+        unsafe { (*self.frame).height as u32 }
+    }
 }
 
 impl<AV> std::ops::Drop for Frame<AV> {
@@ -91,3 +130,16 @@ impl<AV> std::default::Default for Frame<AV> {
 // pointer.
 unsafe impl<AV> std::marker::Send for Frame<AV> {}
 unsafe impl<AV> std::marker::Sync for Frame<AV> {}
+
+pub struct Plane<'frame> {
+    pub data: &'frame [u8],
+    pub linesize: usize,
+}
+
+impl<'frame> Deref for Plane<'frame> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.data
+    }
+}

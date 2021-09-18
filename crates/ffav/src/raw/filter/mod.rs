@@ -1,5 +1,6 @@
 pub mod audio;
 mod graph;
+pub mod video;
 
 use crate::{
     config::Dictionary,

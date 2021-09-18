@@ -9,7 +9,7 @@ use ffav_sys::{
 };
 
 use crate::{
-    config::{stream::DecodedStreamConfig, StreamConfig},
+    config::stream::DecodedStreamConfig,
     error::{Error, Result},
     util::{marker::Decode, MediaType},
 };
@@ -32,10 +32,10 @@ impl<AV: MediaType> Codec<Decode, AV> {
     /// stream.
     pub fn open_decode(stream: &Stream<'_, AV>) -> Result<Codec<Decode, AV>> {
         unsafe {
-            let stream = stream.as_raw();
+            let stream_ptr = stream.as_raw();
 
             let codec = {
-                let decoder = avcodec_find_decoder((*(*stream).codecpar).codec_id);
+                let decoder = avcodec_find_decoder((*(*stream_ptr).codecpar).codec_id);
 
                 if decoder.is_null() {
                     return Err(Error::ResourceNotFound("decoder"));
@@ -47,7 +47,7 @@ impl<AV: MediaType> Codec<Decode, AV> {
                     return Err(Error::AllocationFailed("initializing decoder context"));
                 }
 
-                let err = avcodec_parameters_to_context(decoder_ctx, (*stream).codecpar);
+                let err = avcodec_parameters_to_context(decoder_ctx, (*stream_ptr).codecpar);
 
                 if err < 0 {
                     return Err(Error::from_av_err("copying codec parameters", err));
@@ -62,10 +62,7 @@ impl<AV: MediaType> Codec<Decode, AV> {
                 decoder_ctx
             };
 
-            let cfg: StreamConfig<AV> = StreamConfig::<AV>::from_av_stream(stream)
-                .try_as_type()
-                .unwrap();
-
+            let cfg = stream.config();
             let stream_config = DecodedStreamConfig::new(cfg, codec);
 
             Ok(Codec {
