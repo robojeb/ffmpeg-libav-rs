@@ -1,5 +1,7 @@
 //! Error types and functions
 
+use std::ffi::CString;
+
 use ffav_sys::AVMediaType;
 use thiserror::Error;
 
@@ -30,4 +32,8 @@ pub enum Error {
         /// What AVMediaType was found
         found: AVMediaType,
     },
+
+    /// A filter could not be found when requested by name
+    #[error("The requested filter type {0:?} was not found in the linked FFmpeg version")]
+    FilterNotFound(CString),
 }

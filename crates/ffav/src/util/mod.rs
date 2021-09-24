@@ -23,3 +23,12 @@ pub(crate) fn path_to_cstr(p: &Path) -> Result<CString> {
     let s = p.to_str().ok_or_else(|| Error::InvalidPath(p.to_owned()))?;
     Ok(CString::new(s)?)
 }
+
+pub(crate) fn make_id_from_ptr<T>(ptr: *mut T) -> u64 {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    let mut s = DefaultHasher::new();
+    ptr.hash(&mut s);
+    s.finish()
+}
