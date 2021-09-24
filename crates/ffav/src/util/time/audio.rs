@@ -25,6 +25,7 @@ pub struct Sample(u64);
 
 impl super::IntoStreamTimestamp<Audio> for Sample {
     fn into(self, stream: &crate::config::StreamConfig<Audio>) -> super::Timestamp {
-        TimeBaseTicks::new(self.0).to_timestamp(TimeBase::new(1, stream.sample_rate().0 as u64))
+        TimeBaseTicks::new(self.0)
+            .to_timestamp(TimeBase::new(1, stream.parameters().sample_rate().0 as u64))
     }
 }

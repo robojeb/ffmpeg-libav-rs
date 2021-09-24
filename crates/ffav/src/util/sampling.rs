@@ -1,3 +1,5 @@
+//! Types related to sampling audio data
+
 use core::fmt;
 use std::{borrow::Cow, ffi::CStr};
 

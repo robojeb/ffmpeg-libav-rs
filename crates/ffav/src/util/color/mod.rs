@@ -1,3 +1,4 @@
+//! Types related to encoding Pixels in images
 mod color_primary;
 #[cfg(feature = "image-decode")]
 mod image_ext;

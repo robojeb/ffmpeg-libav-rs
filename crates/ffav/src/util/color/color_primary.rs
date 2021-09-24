@@ -1,7 +1,8 @@
 use ffav_sys::AVColorPrimaries;
 
-fflib_version::ffversion! {
+fflib_version::ffcfg! {
 
+/// What color primary is used for encoding the frame data
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ColorPrimary {
     /// Unspecified color primary
@@ -33,7 +34,7 @@ pub enum ColorPrimary {
     }
 
     #[libavformat(before(58.76))] {
-    ///JEDEC P22 group phosphors
+    /// JEDEC P22 group phosphors
     JEDECP22,
     }
 }
@@ -83,7 +84,6 @@ impl From<ColorPrimary> for AVColorPrimaries {
             #[libavformat(before(58.76))] {
             ColorPrimary::JEDECP22 => AVColorPrimaries::AVCOL_PRI_JEDEC_P22,
             }
-            _ => unimplemented!(),
         }
     }
 }

@@ -15,7 +15,7 @@ impl TimeBase {
     pub const MILLISECONDS: TimeBase = TimeBase(Rational::new_raw(1, 1000));
 
     /// Create a time-base from an `AVRational` type
-    pub(crate) fn from_av_rational(rational: &AVRational) -> Self {
+    pub fn from_av_rational(rational: &AVRational) -> Self {
         TimeBase(Rational::new(rational.num as u64, rational.den as u64))
     }
 

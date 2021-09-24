@@ -88,7 +88,7 @@ enum Library {
 }
 
 #[proc_macro]
-pub fn ffversion(item: TokenStream) -> TokenStream {
+pub fn ffcfg(item: TokenStream) -> TokenStream {
     find_attributes(item)
 }
 

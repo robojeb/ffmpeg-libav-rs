@@ -1,18 +1,23 @@
+//! Structures related to decoded Frame data
 use ffav_sys::{av_frame_alloc, av_frame_free, av_frame_unref, AVFrame, AV_NUM_DATA_POINTERS};
 use std::{marker::PhantomData, ops::Deref};
 
-use crate::util::{marker::Video, time::TimeBaseTicks};
+use crate::util::{marker::Video, time::TimeBaseTicks, traits::MediaMarker};
 
+/// How many data planes exist in each Frame
 pub const NUM_DATA_PLANES: usize = AV_NUM_DATA_POINTERS as usize;
 
-/// A decodec frame of data of type `T`
-pub struct Frame<AV> {
+/// A decodec frame of data of type `AV`
+pub struct Frame<AV: MediaMarker> {
     frame: *mut AVFrame,
     _type: PhantomData<AV>,
 }
 
-impl<AV> Frame<AV> {
+impl<AV: MediaMarker> Frame<AV> {
     /// Create a new frame of the specified type
+    ///
+    /// # Panics
+    /// If the new frame cannot be allocated
     pub fn new() -> Frame<AV> {
         Frame {
             frame: unsafe {
@@ -47,7 +52,7 @@ impl<AV> Frame<AV> {
         unsafe { TimeBaseTicks::new((*self.frame).pts as u64) }
     }
 
-    /// Get the raw pointer to the frame
+    /// Get the raw mutable pointer to the frame
     ///
     /// Intended as an escape hatch if something is impossible with the abstraction
     /// layer.
@@ -56,7 +61,20 @@ impl<AV> Frame<AV> {
     /// The pointer should not be held longer than the life of the `Frame`.
     /// While using the raw pointer it should be considered that the `Frame`
     /// is mutably borrowed.
-    pub unsafe fn as_raw(&mut self) -> *mut AVFrame {
+    pub unsafe fn as_ptr_mut(&mut self) -> *mut AVFrame {
+        self.frame
+    }
+
+    /// Get the raw constant pointer to the frame
+    ///
+    /// Intended as an escape hatch if something is impossible with the abstraction
+    /// layer.
+    ///
+    /// # Safety
+    /// The pointer should not be held longer than the life of the `Frame`.
+    /// While using the raw pointer it should be considered that the `Frame`
+    /// is mutably borrowed.
+    pub unsafe fn as_ptr(&self) -> *const AVFrame {
         self.frame
     }
 
@@ -64,7 +82,7 @@ impl<AV> Frame<AV> {
     ///
     /// Existing data in this frame will be unreferenced and no longer
     /// accessible.
-    pub fn as_other<T>(self) -> Frame<T> {
+    pub fn as_other<T: MediaMarker>(self) -> Frame<T> {
         let mut out: Frame<T> = unsafe { std::mem::transmute(self) };
         out.unref();
         out
@@ -108,7 +126,7 @@ impl Frame<Video> {
     }
 }
 
-impl<AV> std::ops::Drop for Frame<AV> {
+impl<AV: MediaMarker> std::ops::Drop for Frame<AV> {
     fn drop(&mut self) {
         unsafe {
             av_frame_unref(self.frame);
@@ -120,7 +138,7 @@ impl<AV> std::ops::Drop for Frame<AV> {
     }
 }
 
-impl<AV> std::default::Default for Frame<AV> {
+impl<AV: MediaMarker> std::default::Default for Frame<AV> {
     fn default() -> Self {
         Self::new()
     }
@@ -128,11 +146,17 @@ impl<AV> std::default::Default for Frame<AV> {
 
 // SAFETY: Frame has no interior mutability and is the sole owner of its internal
 // pointer.
-unsafe impl<AV> std::marker::Send for Frame<AV> {}
-unsafe impl<AV> std::marker::Sync for Frame<AV> {}
+unsafe impl<AV: MediaMarker> std::marker::Send for Frame<AV> {}
+unsafe impl<AV: MediaMarker> std::marker::Sync for Frame<AV> {}
 
+/// A single plane of data from a Frame
 pub struct Plane<'frame> {
+    /// The underlying data of the Plane
     pub data: &'frame [u8],
+    /// How many bytes correspond to each line
+    ///
+    /// For video data there will be `frame.height()` lines in the `data` buffer
+    /// For audio, there will be one line per plane of audio data
     pub linesize: usize,
 }
 

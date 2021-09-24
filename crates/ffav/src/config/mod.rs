@@ -1,11 +1,9 @@
-//! This module contains data structures which store or modify the configuration
-//! of various `ffav` structures.
-//!
+//! Structures which represent the configuration of a process or object
 
+mod codec;
 mod dict;
-pub mod format;
-pub mod stream;
+mod stream;
 
+pub use codec::*;
 pub use dict::*;
-pub use format::FormatConfig;
-pub use stream::StreamConfig;
+pub use stream::*;

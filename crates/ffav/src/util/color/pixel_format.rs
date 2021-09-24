@@ -3,25 +3,12 @@ use super::Endian;
 use ffav_sys::{av_get_pix_fmt_name, AVPixelFormat};
 use std::{borrow::Cow, ffi::CStr, fmt};
 
-pub enum ColorEncoding {
-    /// YUV and YUVA encodings
-    YUV(),
-    /// RGB Encodings
-    RGB(),
-    /// XYZ Encodings
-    XYZ(),
-    /// Grayscale encodings
-    Gray(),
-    /// Indexed color encodings
-    Indexed(),
-    /// Hardware specific encodings
-    Hardware(),
-}
+fflib_version::ffcfg! {
 
-fflib_version::ffversion! {
-
+/// What format are the pixels stored in the decoded Frame
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PixelFormat {
+    /// No pixel format was specified
     NONE,
     /// planar YUV 4:2:0, 12bpp, (1 Cr & Cb sample per 2x2 Y samples)
     YUV420P,

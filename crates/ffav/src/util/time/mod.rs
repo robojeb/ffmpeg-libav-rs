@@ -25,6 +25,8 @@ pub use video::*;
 use crate::config::StreamConfig;
 use num_rational::Ratio;
 
+use super::traits::MediaMarker;
+
 /// Internal rational type for storing TimeBase and Framerate
 ///
 /// Where AVRational is a signed 32bit type, we are using an unsigned 64-bit
@@ -33,14 +35,14 @@ use num_rational::Ratio;
 type Rational = Ratio<u64>;
 
 /// A type which can be converted into a timestamp using the context of a Stream
-pub trait IntoStreamTimestamp<AV> {
+pub trait IntoStreamTimestamp<AV: MediaMarker> {
     /// Convert to a timestamp
     fn into(self, stream: &StreamConfig<AV>) -> Timestamp;
 }
 
 /// Anything which can be directly converted to a timestamp can be converted
 /// to stream specific timestamp
-impl<T, AV> IntoStreamTimestamp<AV> for T
+impl<T, AV: MediaMarker> IntoStreamTimestamp<AV> for T
 where
     T: Into<Timestamp>,
 {

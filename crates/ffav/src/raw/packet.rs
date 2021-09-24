@@ -1,6 +1,6 @@
-use ffav_sys::{av_packet_alloc, av_packet_free, av_packet_unref, AVPacket};
+//! Structures for handling encoded packets of data from a Container
 
-use super::stream::Stream;
+use ffav_sys::{av_packet_alloc, av_packet_free, av_packet_unref, AVPacket};
 
 /// An encoded packet of data from a Format data contents are of an unknown
 /// type and must be passed to the proper Codec to be decoded into a frame.
@@ -10,6 +10,9 @@ pub struct Packet {
 
 impl Packet {
     /// Create a new Packet which references no data
+    ///
+    /// # Panics
+    /// Pancis if the Packet cannot be allocated
     pub fn new() -> Packet {
         Packet {
             pkt: unsafe {
@@ -51,12 +54,12 @@ impl Packet {
         }
     }
 
-    /// Chack if this packet belongs to the provided stream
-    pub fn is_for_stream<AV>(&self, stream: &Stream<AV>) -> bool {
-        stream.is_packet_for_stream(self)
-    }
+    // /// Chack if this packet belongs to the provided stream
+    // pub fn is_for_stream<AV>(&self, stream: &Stream<AV>) -> bool {
+    //     stream.is_packet_for_stream(self)
+    // }
 
-    /// Get the raw pointer to the Packet
+    /// Get the raw mutable pointer to the Packet
     ///
     /// Intended as an escape hatch if something is impossible with the abstraction
     /// layer.
@@ -65,7 +68,20 @@ impl Packet {
     /// The pointer should not be held longer than the life of the `Packet`.
     /// While using the raw pointer it should be considered that the `Packet`
     /// is mutably borrowed.
-    pub unsafe fn as_raw(&self) -> *mut AVPacket {
+    pub unsafe fn as_ptr_mut(&mut self) -> *mut AVPacket {
+        self.pkt
+    }
+
+    /// Get the raw const pointer to the Packet
+    ///
+    /// Intended as an escape hatch if something is impossible with the abstraction
+    /// layer.
+    ///
+    /// # Safety
+    /// The pointer should not be held longer than the life of the `Packet`.
+    /// While using the raw pointer it should be considered that the `Packet`
+    /// is mutably borrowed.
+    pub unsafe fn as_ptr(&self) -> *const AVPacket {
         self.pkt
     }
 }

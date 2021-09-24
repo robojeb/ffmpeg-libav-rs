@@ -1,4 +1,4 @@
-//#![warn(missing_docs)]
+#![warn(missing_docs)]
 //! This crate provides safe wrappers around ffmpeg's libav* set of libraries.
 //!
 //! # Goals
@@ -46,10 +46,10 @@
 //! ## Raw API
 //! TODO
 
+#[cfg(target_pointer_width = "16")]
+std::compile_error! {"Targets with 16-bit pointer width are not supported at this time"}
+
 pub mod config;
-pub mod decode;
 pub mod error;
 pub mod raw;
 pub mod util;
-
-pub use raw::{frame::Frame, packet::Packet};
